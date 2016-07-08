@@ -47,3 +47,8 @@ You can set it to `-p ''` to simply rename all files.
 `-f series` will look for occurrences of the original file names in the file
 `series` and replace them with the renamed file names.
 For me, `series` is the MQ patch series file.
+
+# Copyright
+
+This is copyright Mozilla Corporation because I started work on this while at
+work at my summer internship.
