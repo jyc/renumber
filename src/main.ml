@@ -94,7 +94,7 @@ let do_rename_in renames target =
   output_file ~filename:target ~text:(Buffer.contents out)
 
 let () =
-  let prefix = ref "p" in
+  let prefix = ref "patch" in
   let separator = ref "-" in
   let quiet = ref false in
   let rename_in = ref [] in
