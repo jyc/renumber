@@ -1,0 +1,5 @@
+# begin mk META
+requires = "batteries"
+archive(byte) = "renumber.cma"
+archive(native) = "renumber.cmxa"
+# end
