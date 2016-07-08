@@ -36,14 +36,6 @@ let compare xs ys =
   in
   compare' (xs, ys)
 
-let index haystack needle =
-  let rec loop i =
-    if i >= String.length haystack then raise Not_found
-    else if List.mem haystack.[i] needle then i
-    else loop (succ i)
-  in 
-  loop 0
-
 let renumber parts i =
   let rec renumber' = function
     | [] -> raise Not_found
