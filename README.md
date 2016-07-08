@@ -48,6 +48,17 @@ You can set it to `-p ''` to simply rename all files.
 `series` and replace them with the renamed file names.
 For me, `series` is the MQ patch series file.
 
+# Building
+
+Batteries is the only dependency, which you can install using OPAM:
+
+    opam install batteries
+
+You can build using [Car](https://github.com/jonathanyc/car):
+
+    car opt
+    ./main.native -help
+
 # Copyright
 
 This is copyright Mozilla Corporation because I started work on this while at
