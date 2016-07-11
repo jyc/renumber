@@ -54,7 +54,7 @@ let unparse separator parts =
   let rec unparse' = function
     | [] -> ()
     | `Float f :: rest ->
-      Buffer.add_string out (string_of_int @@ int_of_float @@ f) ;
+      Buffer.add_string out (string_of_int @@ int_of_float f) ;
       separate rest ;
       unparse' rest
     | `String s :: rest ->
@@ -124,7 +124,7 @@ let () =
     )
     |> List.sort (fun (_, xs) (_, ys) -> compare xs ys) 
     |> List.mapi (fun i (file, parts) ->
-      let parts' = renumber parts (float_of_int @@ i + 1) in
+      let parts' = renumber parts @@ float_of_int (i + 1) in
       let file' = unparse !separator parts' in
       (file, !prefix ^ file')
     )
