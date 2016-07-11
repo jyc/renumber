@@ -131,6 +131,11 @@ let () =
     |> List.filter (fun (file, file') -> file <> file')
   in
 
+  if renames = [] then begin
+    printf "No files scheduled for renaming with prefix '%s'.\n" !prefix ;
+    exit 0
+  end ;
+
   List.iter (fun (file, file') ->
     if file <> file' && Sys.file_exists file' then begin
       fprintf stderr "Can't rename '%s' to '%s' because a different file with that name already exists."
