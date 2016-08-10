@@ -90,15 +90,23 @@ let () =
   let separator = ref "-" in
   let quiet = ref false in
   let rename_in = ref [] in
-  let speclist =
-    [("-p", Arg.Set_string prefix,
-      " The prefix for the files to renumber. Defaults to 'patch'.");
-     ("-s", Arg.Set_string separator,
-      " The part separator.");
-     ("-q", Arg.Set quiet,
-      " Be quiet.");
-     ("-f", Arg.String (fun s -> rename_in := s :: !rename_in),
-      " A file to rename references to renamed files in.")]
+  let infile_regex = ref "(^[^-+].*Part) [0-9]+" in
+  let infile_subst = ref "$1 %d" in
+
+  let speclist = [
+    ("-p", Arg.Set_string prefix,
+     " The prefix for the files to renumber. Defaults to 'patch'.");
+    ("-s", Arg.Set_string separator,
+     " The part separator.");
+    ("-q", Arg.Set quiet,
+     " Be quiet.");
+    ("-f", Arg.String (fun s -> rename_in := s :: !rename_in),
+     " A file to rename references to renamed files in.");
+    ("-ir", Arg.Set_string infile_regex,
+     " A regex whose matching strings in the renamed files will be substituted with -is.");
+    ("-is", Arg.Set_string infile_subst,
+     " A substition to apply. Refer to groups in -ir with $n, and new patch number with %d.");
+  ]
   in
   let usage_msg = "A file renumbering tool." in
   let anon_fun _ =
@@ -109,9 +117,16 @@ let () =
   Arg.parse speclist anon_fun usage_msg ;
 
   List.iter (fun target ->
-    if not (Sys.file_exists target) then
-      fprintf stderr "Can't rename references in '%s' because it doesn't seem to exist." target
+    if not (Sys.file_exists target) then begin
+      fprintf stderr "Can't rename references in '%s' because it doesn't seem to exist." target ;
+      exit 1
+    end
   ) !rename_in ;
+
+  if (!infile_regex == "") <> (!infile_subst == "") then begin
+    fprintf stderr "Must supply either both -ir and -ir or neither." ;
+    exit 1
+  end ;
 
   let renames = 
     Sys.readdir "."
@@ -126,9 +141,9 @@ let () =
     |> List.mapi (fun i (file, parts) ->
       let parts' = renumber parts @@ float_of_int (i + 1) in
       let file' = unparse !separator parts' in
-      (file, !prefix ^ file')
+      (file, !prefix ^ file', i + 1)
     )
-    |> List.filter (fun (file, file') -> file <> file')
+    |> List.filter (fun (file, file', _) -> file <> file')
   in
 
   if renames = [] then begin
@@ -136,7 +151,8 @@ let () =
     exit 0
   end ;
 
-  List.iter (fun (file, file') ->
+  (* Check to make sure we can rename safely. *)
+  List.iter (fun (file, file', _) ->
     if file <> file' && Sys.file_exists file' then begin
       fprintf stderr "Can't rename '%s' to '%s' because a different file with that name already exists."
         file file' ;
@@ -144,16 +160,33 @@ let () =
     end
   ) renames ;
 
-  List.iter (fun (file, file') ->
+  (* Apply substitution. *)
+  if !infile_regex <> "" then begin
+    let re = Pcre.regexp ~flags:[`MULTILINE] !infile_regex in
+    List.iter (fun (file, _, i) ->
+      let subst = Pcre.subst (String.nreplace ~str:!infile_subst ~sub:"%d" ~by:(string_of_int i)) in
+      if not !quiet then
+        printf "Substituting in '%s'...\n" file ;
+      let inch = Pervasives.open_in file in
+      let contents = input_all inch in
+      Pervasives.close_in inch ;
+      let contents' = Pcre.replace ~rex:re ~itempl:subst contents in
+      output_file ~filename:file ~text:contents'
+    ) renames
+  end ;
+
+  (* Rename files. *)
+  List.iter (fun (file, file', _) ->
     if not !quiet then
       printf "'%s' -> '%s'\n" file file' ;
     Sys.rename file file'
   ) renames ;
 
+  (* Rename references in -f file. *)
   List.iter (fun target ->
     if not !quiet then
       printf "Renaming references in '%s'...\n" target ;
-    do_rename_in renames target
+    do_rename_in (List.map (fun (file, file', _) -> (file, file')) renames) target
   ) !rename_in ;
 
   if not !quiet then

@@ -1,5 +1,5 @@
 # begin mk META
-requires = "batteries"
+requires = "batteries pcre"
 archive(byte) = "renumber.cma"
 archive(native) = "renumber.cmxa"
 # end

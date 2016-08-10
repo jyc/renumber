@@ -5,6 +5,7 @@ package = "renumber"
 # A list of ocamlfind packages required by this project.
 requires = [
   "batteries"
+  "pcre"
 ]
 # A list of additional flags to pass to ocamlbuild.
 flags = []
